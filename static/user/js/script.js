@@ -228,7 +228,7 @@ function showMainMenu() {
     if (localStorage.getItem("accessToken")) {
         html += `<li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="username" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              ` + window.user.name + `
+              Hi, ` + window.user.name + `
             </a>
             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownBlog">
               <a class="dropdown-item" href="/addPost">Add Post</a>

@@ -55,34 +55,6 @@ MongoClient.connect("mongodb+srv://admin001:iluvc0ding@cluster0.ntkme.mongodb.ne
         }
     });
 
-    app.get("/admin/settings", function (req, res) {
-
-        if (req.session.admin) {
-            blog.collection("settings").findOne({}, function (error, settings) {
-                if (settings == null) {
-                    var postLimit = 10;
-                } else {
-                    var postLimit = parseInt(settings.post_limit);
-                }
-                
-                res.render("admin/settings", {
-                    "post_limit": postLimit
-                });
-            });
-        } else {
-            res.redirect("/admin");
-        }
-
-    });
-
-    app.post("/admin/save_settings", function (req, res) {
-        blog.collection("settings").update({}, {
-            "post_limit": req.body.post_limit
-        }, { upsert: true }, function (error, document) {
-            res.redirect("/admin/settings");
-        });
-    });
-
     app.get("/get-posts/:start/:limit", function (req, res) {
         
         blog.collection("posts").find().sort({
@@ -405,28 +377,6 @@ MongoClient.connect("mongodb+srv://admin001:iluvc0ding@cluster0.ntkme.mongodb.ne
         res.redirect("/admin");
     });
 
-    app.get("/admin/dashboard", function (req, res) {
-        if (req.session.admin) {
-            res.render("admin/dashboard");
-        } else {
-            res.redirect("/admin");
-        }
-    });
-
-    app.get("/admin/posts", function (req, res) {
-        if (req.session.admin) {
-
-            blog.collection("posts").find().sort({"_id": -1}).toArray(function (error, posts) {
-                res.render("admin/posts", {
-                    "posts": posts
-                });
-            });
-
-        } else {
-            res.redirect("/admin");
-        }
-    });
-
     app.get("/posts/edit/:id", function (req, res) {
         if (req.session.admin) {
             
@@ -453,36 +403,6 @@ MongoClient.connect("mongodb+srv://admin001:iluvc0ding@cluster0.ntkme.mongodb.ne
         }, function (error, post) {
             res.send("Updated successfully");
         });
-    });
-
-    app.post("/do-admin-login", function (req, res) {
-        blog.collection("admins").findOne({
-            "email": req.body.email,
-            "password": req.body.password
-        }, function (error, admin) {
-            if (admin != "") {
-                req.session.admin = admin;
-            }
-            res.send(admin);
-        });
-    });
-
-    app.get("/admin", function (req, res) {
-
-        blog.collection("admins").findOne({}, function (error, admin) {
-            if (!admin) {
-                bcryptjs.genSalt(10, function (error, salt) {
-                    bcryptjs.hash("admin", salt, function (error, hash) {
-                        blog.collection("admins").insertOne({
-                            "email": "admin@gmail.com",
-                            "password": "admin"
-                        });
-                    });
-                });
-            }
-        });
-
-        res.render("admin/login");
     });
 
     app.get("/posts/:title", function (req, res) {
