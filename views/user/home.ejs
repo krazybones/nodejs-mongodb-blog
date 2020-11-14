@@ -1,0 +1,75 @@
+<% include header %>
+
+  <!-- Page Content -->
+  <div class="container">
+
+    <!-- Page Heading/Breadcrumbs -->
+    <h1 class="mt-4 mb-3">Blog Home Two
+      <small>Subheading</small>
+    </h1>
+
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="/">Home</a>
+      </li>
+      <li class="breadcrumb-item active">Blog Home 2</li>
+    </ol>
+
+    <!-- Blog Post -->
+    <div id="posts">
+      <% posts.forEach(function (post) { %>
+        <div class="card mb-4" id="post-<%= post._id %>">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-lg-6">
+                <a href="#">
+                  <% if (post.image) { %>
+                    <img class="img-fluid rounded" src="<%= post.image %>" style="width: 100%; height: 300px; object-fit: cover;" alt="<%= post.title %>">
+                  <% } else { %>
+                    <img class="img-fluid rounded" src="http://placehold.it/750x300" alt="<%= post.title %>">
+                  <% } %>
+                </a>
+              </div>
+              <div class="col-lg-6">
+                <h2 class="card-title">
+                  <%= post.title %>
+                </h2>
+                <p class="card-text">
+                  <%- post.content %>
+                </p>
+                <a href="posts/<%= post.title %>" class="btn btn-primary">Read More &rarr;</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+
+    <div class="row" style="margin-bottom: 20px;">
+      <div class="col-md-6" id="div-previous">
+        <button type="button" class="btn btn-info" onclick="getPrevious();">
+          Previous
+        </button>
+      </div>
+
+      <div class="col-md-6" id="div-next">
+        <button type="button" class="btn btn-info" style="float: right;" onclick="getNext();">
+          Next
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  </div>
+  <!-- /.container -->
+
+  <script>
+
+    var start = 0;
+    var limit = <%= postLimit %>;
+
+    
+  </script>
+
+  <% include footer %>

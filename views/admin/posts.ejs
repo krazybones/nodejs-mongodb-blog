@@ -1,0 +1,170 @@
+<% include header %>
+
+<div class="container-fluid" style="margin-top: 50px;">
+	<form method="POST" onsubmit="return doPost(this);">
+		<div class="form-group">
+			<label>Title</label>
+			<input name="title" class="form-control" placeholder="Title" />
+		</div>
+
+		<!-- Button trigger modal -->
+		<div class="form-group">
+            <button class = "btn btn-primary" data-toggle = "modal" data-target = "#myModal" type="button">
+               Upload image
+            </button>      
+        </div>
+
+		<div class="form-group">
+			<label>Content</label>
+			<textarea rows="10" name="content" class="form-control" placeholder="Title"></textarea>
+		</div>
+
+        <div class="form-group">
+            <label>Categories</label>
+            <select multiple name="categories[]" id="categories" class="form-control">
+                <option value="Travel">Travel</option>
+                <option value="Gaming">Gaming</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Health">Health</option>
+                <option value="Finance">Finance</option>
+                <option value="News">News</option>
+            </select>
+        </div>
+
+		<input type="submit" class="btn btn-info" value="Post" />
+	</form>
+
+    <br>
+
+	<table class="table">
+		<tr>
+			<th>Title</th>
+			<th>Image</th>
+			<th>Action</th>
+		</tr>
+
+		<% posts.forEach(function (post) { %>
+			
+			<tr>
+				<td><%= post.title %></td>
+				<td>
+					<img src="<%= post.image %>" style="width: 300px;">
+				</td>
+				<td>
+					<a href="/posts/edit/<%= post._id %>" class="btn btn-warning btn-sm">
+						Edit
+					</a>
+
+					<button type="button" class="btn btn-danger btn-sm" onclick="doDelete('<%= post._id %>', '<%= post.image %>');">
+						Delete
+					</button>
+				</td>
+			</tr>
+
+		<% }) %>
+	</table>
+</div>
+
+<script>
+	function doDelete(postId, image) {
+		if (confirm("Are you sure you want to delete ?")) {
+			$.ajax({
+				url: "/do-delete",
+				method: "POST",
+				data: {
+					"_id": postId,
+					"image": image
+				},
+				success: function (response) {
+					
+					var socket = io();
+					socket.emit("delete_post", postId);
+
+					alert(response);
+				}
+			});
+		}
+	}
+
+	function doPost(form) {
+		var formData = {
+			title: form.title.value,
+			content: form.content.value,
+			image: imagePath,
+            categories: JSON.stringify($("#categories").val())
+		};
+
+		$.ajax({
+			url: "/do-post",
+			method: "POST",
+			data: formData,
+			success: function (response) {
+
+                alert(response.message);
+
+                if (response.status == "error") {
+                    return;
+                }
+
+				formData._id = response._id;
+
+				var socket = io();
+				socket.emit("new_post", formData);
+			}
+		});
+		return false;
+	}
+</script>
+
+<!-- Modal -->
+<div class = "modal fade" id = "myModal" tabindex = "-1" role = "dialog" 
+   aria-labelledby = "myModalLabel" aria-hidden = "true">
+   
+   <div class = "modal-dialog">
+      <div class = "modal-content">
+         
+         <div class = "modal-header">
+            <h4 class = "modal-title" id = "myModalLabel">
+               Upload image
+            </h4>
+
+            <button type = "button" class = "close" data-dismiss = "modal" aria-hidden = "true">
+               ×
+            </button>
+         </div>
+         
+         <div class = "modal-body">
+            <form method="POST" enctype="multipart/form-data" id="form-upload">
+            	<div class="form-group">
+            		<input type="file" name="file" class="form-control" />
+            	</div>
+            	<input type="submit" class="btn btn-success" value="Upload" />
+            </form>
+         </div>
+         
+      </div><!-- /.modal-content -->
+   </div><!-- /.modal-dialog -->
+   
+</div><!-- /.modal -->
+
+<script>
+	var imagePath = "";
+
+	$("#form-upload").on("submit", function (e) {
+		e.preventDefault();
+		$.ajax({
+			url: "/do-upload-image",
+			method: "POST",
+			data: new FormData(this),
+			contentType: false,
+			cache: false,
+			processData: false,
+			success: function (response) {
+				imagePath = response;
+				$("#myModal").modal("hide");
+			}
+		});
+	});
+</script>
+
+<% include footer %>

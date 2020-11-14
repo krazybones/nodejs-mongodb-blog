@@ -1,0 +1,86 @@
+<% include header %>
+
+  <!-- Page Content -->
+  <div class="container">
+
+    <!-- Page Heading/Breadcrumbs -->
+    <h1 class="mt-4 mb-3">Sign in
+    </h1>
+
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="/">Home</a>
+      </li>
+      <li class="breadcrumb-item active">Sign in</li>
+    </ol>
+
+    <!-- Blog Post -->
+    <div>
+        <div class="card mb-4">
+          <div class="card-body">
+            <div class="row">
+
+              <div class="col-md-12">
+                <form onsubmit="return doLogin(this);">
+                    
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" required name="email" class="form-control" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" required name="password" class="form-control" />
+                    </div>
+
+                    <div class="submit-btns">
+                        <button class="mtr-btn signup btn btn-primary" name="submit" type="submit">
+                            <span>Login</span>
+                        </button>
+                    </div>
+                </form>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+    </div>
+
+  </div>
+
+  </div>
+  <!-- /.container -->
+
+    <script>
+        function doLogin(form) {
+            form.submit.setAttribute("disabled", "disabled");
+            form.submit.innerHTML = "<span>Loading...</span>";
+
+            var ajax = new XMLHttpRequest();
+            ajax.open("POST", "/login", true);
+            ajax.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+            ajax.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    form.submit.removeAttribute("disabled");
+                    form.submit.innerHTML = "<span>Login</span>";
+
+                    var response = JSON.parse(this.responseText);
+                    
+                    if (response.status == "success") {
+                        const accessToken = response.accessToken;
+                        localStorage.setItem("accessToken", accessToken);
+                        window.location.href = "/";
+                    } else {
+                        alert(response.message);
+                    }
+                }
+            };
+
+            ajax.send("email=" + form.email.value + "&password=" + form.password.value);
+            return false;
+        }
+    </script>
+
+<% include footer %>
