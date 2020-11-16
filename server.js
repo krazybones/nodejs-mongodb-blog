@@ -33,7 +33,7 @@ const jwt = require("jsonwebtoken");
 const accessSecret = "myAccessTokenSecret1234567890";
 
 var MongoClient = require("mongodb").MongoClient;
-MongoClient.connect("mongodb+srv://admin001:iluvc0ding@cluster0.ntkme.mongodb.net/mongodb-blog-final?retryWrites=true&w=majority", {useNewUrlParser: true}, function (error, client) {
+MongoClient.connect("mongodb+srv://admin001:iluvc0ding@cluster0.ntkme.mongodb.net/mongodb-blog-final?retryWrites=true&w=majority", {useNewUrlParser: true, useUnifiedTopology: true}, function (error, client) {
     var blog = client.db("node-blog");
     console.log("DB connected");
 
