@@ -232,6 +232,7 @@ function showMainMenu() {
             </a>
             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownBlog">
               <a class="dropdown-item" href="/addPost">Add Post</a>
+              <a class="dropdown-item" href="/manage-posts">Manage Posts</a>
               <a class="dropdown-item" href="/logout" onclick="return doLogout();">Logout</a>
             </div>
         </li>`;

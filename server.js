@@ -85,6 +85,240 @@ MongoClient.connect("mongodb+srv://admin001:iluvc0ding@cluster0.ntkme.mongodb.ne
         });
     });
 
+    app.post("/do-update-image-by-user", function (req, result) {
+        var formData = new formidable.IncomingForm();
+        formData.parse(req, async function (error, fields, files) {
+
+            const accessToken = fields.accessToken;
+            const _id = fields._id;
+
+            const user = await blog.collection("users").findOne({
+                "accessToken": accessToken
+            });
+
+            if (user == null) {
+                result.json({
+                    "status": "error",
+                    "message": "User has been logged out. Please login again."
+                });
+                return;
+            }
+
+            const post = await blog.collection("posts").findOne({
+                $and: [{
+                    "user._id": user._id
+                }, {
+                    "_id": ObjectId(_id)
+                }]
+            });
+
+            if (post == null) {
+                result.json({
+                    "status": "error",
+                    "message": "You do not have access to this post."
+                });
+                return;
+            }
+
+            fs.unlink(post.image.replace("/", ""), function (error) {
+                var oldPath = files.file.path;
+                var newPath = "static/images/" + files.file.name;
+                
+                fs.rename(oldPath, newPath, function (err) {
+                    result.json({
+                        "status": "success",
+                        "message": "Image has been updated.",
+                        "newPath": "/" + newPath
+                    });
+                });
+            });
+        });
+    });
+
+    app.post("/delete-post", async function (request, result) {
+        const accessToken = request.body.accessToken;
+        const _id = request.body._id;
+
+        const user = await blog.collection("users").findOne({
+            "accessToken": accessToken
+        });
+
+        if (user == null) {
+            result.json({
+                "status": "error",
+                "message": "User has been logged out. Please login again."
+            });
+            return;
+        }
+
+        const post = await blog.collection("posts").findOne({
+            $and: [{
+                "user._id": user._id
+            }, {
+                "_id": ObjectId(_id)
+            }]
+        });
+
+        if (post == null) {
+            result.json({
+                "status": "error",
+                "message": "You do not have access to this post."
+            });
+            return;
+        }
+
+        fs.unlink(post.image.replace("/", ""), async function (error) {
+
+            await blog.collection("posts").remove({
+                $and: [{
+                    "user._id": user._id
+                }, {
+                    "_id": ObjectId(_id)
+                }]
+            });
+
+            result.json({
+                "status": "success",
+                "message": "Post has been deleted."
+            });
+
+        });
+    });
+
+    app.get("/manage-posts", async function (request, result) {
+        result.render("user/manage-posts");
+    });
+
+    app.post("/get-user-posts", async function (request, result) {
+        const accessToken = request.body.accessToken;
+        
+        const user = await blog.collection("users").findOne({
+            "accessToken": accessToken
+        });
+
+        if (user == null) {
+            result.json({
+                "status": "error",
+                "message": "User has been logged out. Please login again."
+            });
+            return;
+        }
+
+        const posts = await blog.collection("posts").find({
+            "user._id": user._id
+        }).toArray();
+        result.json({
+            "status": "success",
+            "message": "Data has been fetched.",
+            "posts": posts
+        });
+    });
+
+    app.post("/get-post/", async function (request, result) {
+
+        const accessToken = request.body.accessToken;
+        const title = request.body.title;
+        
+        const user = await blog.collection("users").findOne({
+            "accessToken": accessToken
+        });
+
+        if (user == null) {
+            result.json({
+                "status": "error",
+                "message": "User has been logged out. Please login again."
+            });
+            return;
+        }
+
+        const post = await blog.collection("posts").findOne({
+            $and: [{
+                "user._id": user._id
+            }, {
+                "title": title
+            }]
+        });
+
+        if (post == null) {
+            result.json({
+                "status": "error",
+                "message": "You do not have access to this post."
+            });
+            return;
+        }
+
+        result.json({
+            "status": "success",
+            "message": "Data has been fetched.",
+            "post": post
+        });
+    });
+
+    app.get("/edit-post/:title", function (request, result) {
+        const title = request.params.title;
+        result.render("user/editPost", {
+            "title": title
+        });
+    });
+
+    app.post("/edit-post", async function (request, result) {
+
+        var title = request.body.title;
+        var content = request.body.content;
+        var image = request.body.image;
+        const categories = JSON.parse(request.body.categories);
+        const _id = request.body._id;
+        const accessToken = request.body.accessToken;
+
+        const user = await blog.collection("users").findOne({
+            "accessToken": accessToken
+        });
+
+        if (user == null) {
+            result.json({
+                "status": "error",
+                "message": "User has been logged out. Please login again."
+            });
+            return;
+        }
+
+        const post = await blog.collection("posts").findOne({
+            $and: [{
+                "user._id": user._id
+            }, {
+                "_id": ObjectId(_id)
+            }]
+        });
+
+        if (post == null) {
+            result.json({
+                "status": "error",
+                "message": "You do not have access to this post."
+            });
+            return;
+        }
+
+        await blog.collection("posts").updateOne({
+            $and: [{
+                "user._id": user._id
+            }, {
+                "_id": ObjectId(_id)
+            }]
+        }, {
+            $set: {
+                "title": title,
+                "content": content,
+                "image": image,
+                "categories": categories
+            }
+        });
+
+        result.json({
+            "status": "success",
+            "message": "Post has been updated."
+        });
+    });
+
     app.get("/addPost", function (request, result) {
         result.render("user/addPost");
     });

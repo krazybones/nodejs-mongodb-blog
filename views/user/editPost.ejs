@@ -1,0 +1,213 @@
+<% include header %>
+
+  <!-- Page Content -->
+  <div class="container">
+
+    <!-- Page Heading/Breadcrumbs -->
+    <h1 class="mt-4 mb-3">Edit post
+    </h1>
+
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="/">Home</a>
+      </li>
+      <li class="breadcrumb-item active">Edit post</li>
+    </ol>
+
+    <!-- Blog Post -->
+    <div>
+        <div class="card mb-4">
+          <div class="card-body">
+            <div class="row">
+
+              <div class="col-md-12">
+                <form onsubmit="return doEditPost(this);" id="form-edit-post">
+
+                    <input type="hidden" name="_id">
+                    
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" required name="title" class="form-control" />
+                    </div>
+
+                    <div class="form-group">
+                        <img id="post-img" style="width: 100%; margin-bottom: 10px;">
+
+                        <button class = "btn btn-primary" data-toggle = "modal" data-target = "#myModal" type="button">
+                           Upload image
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Content</label>
+                        <textarea rows="10" required name="content" class="form-control"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Categories</label>
+                        <select multiple name="categories[]" id="categories" class="form-control">
+                            <option value="Travel">Travel</option>
+                            <option value="Gaming">Gaming</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Health">Health</option>
+                            <option value="Finance">Finance</option>
+                            <option value="News">News</option>
+                        </select>
+                    </div>
+
+                    <div class="submit-btns">
+                        <button class="mtr-btn signup btn btn-warning" name="submit" type="submit">
+                            <span>Edit post</span>
+                        </button>
+                    </div>
+                </form>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+    </div>
+
+  </div>
+
+  </div>
+  <!-- /.container -->
+
+  <!-- Modal -->
+<div class = "modal fade" id = "myModal" tabindex = "-1" role = "dialog" 
+   aria-labelledby = "myModalLabel" aria-hidden = "true">
+   
+   <div class = "modal-dialog">
+      <div class = "modal-content">
+         
+         <div class = "modal-header">
+            <h4 class = "modal-title" id = "myModalLabel">
+               Upload image
+            </h4>
+
+            <button type = "button" class = "close" data-dismiss = "modal" aria-hidden = "true">
+               ×
+            </button>
+         </div>
+         
+         <div class = "modal-body">
+            <form method="POST" enctype="multipart/form-data" id="form-upload">
+
+                <input type="hidden" name="_id">
+                <input type="hidden" name="accessToken">
+
+                <div class="form-group">
+                    <input type="file" name="file" class="form-control" />
+                </div>
+                <input type="submit" class="btn btn-success" value="Upload" />
+            </form>
+         </div>
+         
+      </div><!-- /.modal-content -->
+   </div><!-- /.modal-dialog -->
+   
+</div><!-- /.modal -->
+
+<input type="hidden" id="post-title" value="<%= title %>">
+
+    <script>
+
+        var imagePath = "";
+
+        window.addEventListener("load", function () {
+
+            var ajax = new XMLHttpRequest();
+            ajax.open("POST", "/get-post", true);
+            ajax.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+            ajax.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+
+                    var response = JSON.parse(this.responseText);
+                    
+                    if (response.status == "success") {
+                        var form = document.getElementById("form-edit-post");
+                        form._id.value = response.post._id;
+                        form.title.value = response.post.title;
+                        form.content.value = response.post.content;
+                        document.getElementById("post-img").setAttribute("src", response.post.image);
+
+                        for (var a = 0; a < response.post.categories.length; a++) {
+                            const category = response.post.categories[a];
+                            $('#categories option[value ="' + category + '"]').attr('selected', true);
+                        }
+
+                        var formUpload = document.getElementById("form-upload");
+                        formUpload._id.value = response.post._id;
+                        formUpload.accessToken.value = localStorage.getItem("accessToken");
+
+                        imagePath = response.post.image;
+                    } else {
+                        alert(response.message);
+                    }
+                }
+            };
+
+            ajax.send("accessToken=" + localStorage.getItem("accessToken") + "&title=" + document.getElementById("post-title").value);
+
+            $("#form-upload").on("submit", function (e) {
+                e.preventDefault();
+                $.ajax({
+                    url: "/do-update-image-by-user",
+                    method: "POST",
+                    data: new FormData(this),
+                    contentType: false,
+                    cache: false,
+                    processData: false,
+                    success: function (response) {
+                        if (response.status == "success") {
+                            imagePath = response.newPath;
+                            document.getElementById("post-img").setAttribute("src", imagePath);
+                            $("#myModal").modal("hide");
+                        } else {
+                            alert(response.message);
+                        }
+                    }
+                });
+            });
+        });
+
+        function doEditPost(form) {
+            form.submit.setAttribute("disabled", "disabled");
+            form.submit.innerHTML = "<span>Loading...</span>";
+
+            var ajax = new XMLHttpRequest();
+            ajax.open("POST", "/edit-post", true);
+            ajax.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+            ajax.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    form.submit.removeAttribute("disabled");
+                    form.submit.innerHTML = "<span>Edit post</span>";
+
+                    var response = JSON.parse(this.responseText);
+                    alert(response.message);
+
+                    if (response.status == "success") {
+                        var formData = {
+                            title: form.title.value,
+                            content: form.content.value,
+                            image: imagePath,
+                            _id: form._id.value
+                        };
+
+                        var socket = io();
+                        socket.emit("edit_post", formData);
+                    }
+                }
+            };
+
+            const categories = JSON.stringify($("#categories").val());
+
+            ajax.send("title=" + form.title.value + "&content=" + form.content.value + "&image=" + imagePath + "&accessToken=" + localStorage.getItem("accessToken") + "&categories=" + categories + "&_id=" + form._id.value);
+            return false;
+        }
+    </script>
+
+<% include footer %>

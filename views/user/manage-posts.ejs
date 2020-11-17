@@ -1,0 +1,129 @@
+<% include header %>
+
+  <!-- Page Content -->
+  <div class="container">
+
+    <!-- Page Heading/Breadcrumbs -->
+    <h1 class="mt-4 mb-3">All posts
+    </h1>
+
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="/">Home</a>
+      </li>
+      <li class="breadcrumb-item active">All posts</li>
+    </ol>
+
+    <!-- Blog Post -->
+    <div>
+        <div class="card mb-4">
+          <div class="card-body">
+            <div class="row">
+
+              <div class="col-md-12">
+
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Thumbnail</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="tbody">
+                        <!-- created dynamically -->
+                    </tbody>
+                </table>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+    </div>
+
+  </div>
+
+  </div>
+  <!-- /.container -->
+
+    <script>
+
+        window.addEventListener("load", function () {
+            var ajax = new XMLHttpRequest();
+            ajax.open("POST", "/get-user-posts", true);
+            ajax.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+            ajax.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+
+                    var response = JSON.parse(this.responseText);
+
+                    if (response.status == "success") {
+                        var html = "";
+                        for (var a = 0; a < response.posts.length; a++) {
+                            html += `<tr>
+                                <td>` + response.posts[a].title + `</td>
+                                <td><img style='width: 300px;' src='` + response.posts[a].image + `'></td>
+                                <td style="display: flex;">
+                                    <a href="/edit-post/` + response.posts[a].title + `" class="mtr-btn signup btn btn-sm btn-warning">
+                                        <span>Edit</span>
+                                    </a>
+
+                                    <form onsubmit="return doDeletePost(this);" style="margin-left: 5px;">
+                                        <input type="hidden" required name="_id" value="` + response.posts[a]._id + `" />
+                                        <button class="mtr-btn signup btn btn-sm btn-danger" name="submit" type="submit">
+                                            <span>Delete</span>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>`;
+                        }
+                        document.getElementById("tbody").innerHTML = html;
+                    } else {
+                        alert(response.message);
+                    }
+                }
+            };
+
+            ajax.send("accessToken=" + localStorage.getItem("accessToken"));
+        });
+
+        function doDeletePost(form) {
+
+            if (!confirm("Are you sure you want to delete this post ?")) {
+                return false;
+            }
+
+            form.submit.setAttribute("disabled", "disabled");
+            form.submit.innerHTML = "<span>Loading...</span>";
+
+            var ajax = new XMLHttpRequest();
+            ajax.open("POST", "/delete-post", true);
+            ajax.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+            ajax.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    form.submit.removeAttribute("disabled");
+                    form.submit.innerHTML = "<span>Delete</span>";
+
+                    var response = JSON.parse(this.responseText);
+
+                    if (response.status == "success") {
+                        var socket = io();
+                        socket.emit("delete_post", form._id.value);
+
+                        form.parentElement.parentElement.remove();
+                    } else {
+                        alert(response.message);
+                    }
+                }
+            };
+
+            ajax.send("_id=" + form._id.value + "&accessToken=" + localStorage.getItem("accessToken"));
+            return false;
+        }
+    </script>
+
+<% include footer %>
